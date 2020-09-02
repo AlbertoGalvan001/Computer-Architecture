@@ -2,6 +2,10 @@
 
 import sys
 
+HLT = 0b00000001
+LDI = 0b10000010
+PRN = 0b01000111
+
 
 class CPU:
     """Main CPU class."""
@@ -11,6 +15,7 @@ class CPU:
         self.ram = [] * 256
         self.reg = [] * 8
         self.pc = 0
+        self.ir = HLT
 
     def load(self):
         """Load a program into memory."""
@@ -70,4 +75,16 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        self.ir = self.ram[self.pc]
+
+        while self.ir != HLT:
+
+            if self.ir == LDI:
+                register = self.ram_read(self.pc +1)
+                value = self.ram_read(self.pc + 2)
+                self.reg[register] = value
+                self.pc + 3
+
+            pass    
+
+
