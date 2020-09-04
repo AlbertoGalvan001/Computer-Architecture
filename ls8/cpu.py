@@ -12,8 +12,8 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = [] * 256
-        self.reg = [] * 8
+        self.ram = [0] * 256
+        self.reg = [0] * 8
         self.pc = 0
         self.ir = HLT
 
@@ -79,12 +79,18 @@ class CPU:
 
         while self.ir != HLT:
 
+            self.ir = self.ram[self.pc]
+
             if self.ir == LDI:
                 register = self.ram_read(self.pc +1)
                 value = self.ram_read(self.pc + 2)
                 self.reg[register] = value
                 self.pc + 3
 
-            pass    
+            if self.ir == PRN:
+                register = self.ram_read(self.pc + 1)
+                value = self.reg[register]
+                print(value)
+                self.pc += 2
 
 
