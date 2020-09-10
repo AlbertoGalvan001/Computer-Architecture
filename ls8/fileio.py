@@ -4,8 +4,7 @@ if len(sys.argv) < 2:
     print('you might have forgotten to include the file name')
     sys.exit()
 
-
-command_list = [] 
+command_list = []
 
 try:
     with open(sys.argv[1]) as file:
@@ -21,4 +20,4 @@ try:
                 command_list.append(int(num, 2))
 
 except FileNotFoundError:
-    print(f'{sys.argv[0]}: {sys.argv[1]} file not found')                
+    print(f'{sys.argv[0]}: {sys.argv[1]} file not found')

@@ -3,16 +3,28 @@
 import sys
 import fileio
 
-HLT = 0b00000001
-LDI = 0b10000010
-PRN = 0b01000111
-
+HLT = 0b0001
+LDI = 0b0010
+PRN = 0b0111
+ADD = 0b0000
+MUL = 0b0010
+PUSH = 0b0101
+POP = 0b0110
 
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
+        self.branch_table = {
+            HLT : self.HLT,
+            LDI : self.LDI,
+            PRN : self.PRN,
+            ADD : self.ADD,
+            MUL : self.MUL,
+            PUSH : self.PUSH,
+            POP : self.POP
+        }
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
@@ -24,8 +36,8 @@ class CPU:
         address = 0
 
         # For now, we've just hardcoded a program:
+
         program = fileio.command_list
-    
 
         for instruction in program:
             self.ram[address] = instruction
@@ -35,14 +47,16 @@ class CPU:
         return self.ram[pc]
 
     def ram_write(self, value, pc):
-        self.ram[pc] = value    
+        self.ram[pc] = value
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
-        if op == "ADD":
+        if op == ADD:
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
+        elif op == MUL:
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -66,23 +80,48 @@ class CPU:
 
         print()
 
+    def ldi(self):
+        register = self.ram_read(self.pc + 1)
+        value = self.ram_read(self.pc + 2)
+        self.reg[register] = value
+
+    def prn(self):
+        register = self.ram_read(self.pc + 1)
+        value = self.reg[register]
+        print(value)
+
+    def push(self):
+        self.reg[7] -= 1
+        current_sp = self.reg[7] 
+        register = self.ram_read(self.pc + 1)
+        value = self.reg[register] 
+        self.ram_write(value, current_sp)
+
+    def pop(self):
+        current_sp = self.reg[7]
+        value = self.ram_read(self.pc + 1)
+        self.reg[register] = value
+        self.reg[7] += 1             
+
     def run(self):
         """Run the CPU."""
+        self.reg[7] = 0xF4
         self.ir = self.ram[self.pc]
 
-        while self.ir != HLT:
+        command = self.ir & 0b00001111
+
+        while command != HLT:
 
             self.ir = self.ram[self.pc]
 
-            if self.ir == LDI:
-                register = self.ram_read(self.pc +1)
-                value = self.ram_read(self.pc + 2)
-                self.reg[register] = value
-                self.pc + 3
+            num_operands = self.ir >> 6
+            is_alu = self.ir >> 5 & 0b00000001
+            command = self.ir & 0b00001111
 
-            if self.ir == PRN:
-                register = self.ram_read(self.pc + 1)
-                value = self.reg[register]
-                print(value)
-                self.pc += 2
-
+            if is_alu:
+                self.alu(command, self.ram_read(self.pc + 1), self.ram_read(self.pc + 2))
+            
+            elif command != HLT:
+                self.branch_table[command]()
+                
+            self.pc += num_operands + 1

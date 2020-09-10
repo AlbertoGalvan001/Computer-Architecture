@@ -3,7 +3,10 @@
 """Main."""
 
 import sys
+import fileio
 from cpu import *
+
+
 
 cpu = CPU()
 cpu.load()
