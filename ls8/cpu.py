@@ -95,6 +95,7 @@ class CPU:
 
     def pop(self):
         current_sp = self.reg[7]
+        register = self.ram_read(current_sp)
         value = self.ram_read(self.pc + 1)
         self.reg[register] = value
         self.reg[7] += 1             
