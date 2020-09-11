@@ -16,19 +16,15 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.branch_table = {
-            HLT : self.HLT,
-            LDI : self.LDI,
-            PRN : self.PRN,
-            ADD : self.ADD,
-            MUL : self.MUL,
-            PUSH : self.PUSH,
-            POP : self.POP
-        }
+        self.branch_table = {}
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
         self.ir = HLT
+        self.branch_table[LDI] = self.ldi
+        self.branch_table[PRN] = self.prn
+        self.branch_table[PUSH] = self.push
+        self.branch_table[POP] = self.pop
 
     def load(self):
         """Load a program into memory."""
