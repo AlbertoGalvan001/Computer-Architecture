@@ -3,13 +3,15 @@
 import sys
 import fileio
 
-HLT = 0b0001
-LDI = 0b0010
-PRN = 0b0111
-ADD = 0b0000
-MUL = 0b0010
-PUSH = 0b0101
-POP = 0b0110
+HLT = 0b00000001
+LDI = 0b10000010
+PRN = 0b01000111
+ADD = 0b10100000
+MUL = 0b10100010
+PUSH = 0b01000101
+POP = 0b01000110
+CALL = 0b01010000
+RET = 0b00010001
 
 class CPU:
     """Main CPU class."""
@@ -25,6 +27,8 @@ class CPU:
         self.branch_table[PRN] = self.prn
         self.branch_table[PUSH] = self.push
         self.branch_table[POP] = self.pop
+        self.branch_table[CALL] = self.call
+        self.branch_table[RET] = self.ret
 
     def load(self):
         """Load a program into memory."""
@@ -98,27 +102,44 @@ class CPU:
         register = self.ram_read(current_sp)
         value = self.ram_read(self.pc + 1)
         self.reg[register] = value
-        self.reg[7] += 1             
+        self.reg[7] += 1  
+
+    def call(self): 
+        self.reg[7] -= 1
+        current_sp = self.reg[7]
+        self.ram_write(self.pc +  2, current_sp)
+        register = self.ram_read(self.pc + 1)  
+        value = self.reg[register] 
+        self.pc = value
+
+    def ret(self):
+        current_sp = self.reg[7]
+        value = self.ram_read(current_sp)
+        self.pc = value
+        self.reg[7] += 1            
 
     def run(self):
         """Run the CPU."""
         self.reg[7] = 0xF4
         self.ir = self.ram[self.pc]
 
-        command = self.ir & 0b00001111
+        command = self.ir
+        set_pc = self.ir >> 4 & 0b00000001
 
         while command != HLT:
 
             self.ir = self.ram[self.pc]
 
+            command = self.ir
             num_operands = self.ir >> 6
             is_alu = self.ir >> 5 & 0b00000001
-            command = self.ir & 0b00001111
+            set_pc = self.ir >> 4 & 0b00000001 
 
             if is_alu:
                 self.alu(command, self.ram_read(self.pc + 1), self.ram_read(self.pc + 2))
             
             elif command != HLT:
                 self.branch_table[command]()
-                
-            self.pc += num_operands + 1
+
+            if not set_pc:    
+                self.pc += num_operands + 1
